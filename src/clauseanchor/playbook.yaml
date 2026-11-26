@@ -1,0 +1,157 @@
+# Negotiation playbook: eight issues a buyer-side reviewer checks in every inbound
+# MSA or DPA. `pattern` finds the sentence that states the term, `sections` lists
+# the heading keywords a finding may be anchored in (matched at word starts),
+# `positions` maps a parsed value to a verdict, and anything not listed is RED.
+version: 1
+issues:
+  liability_cap_months:
+    title: Liability cap
+    value_type: months
+    standard: Aggregate cap of at least 12 months of Fees
+    hints:
+      - aggregate liability
+      - liability shall not exceed
+      - limitation of liability
+      - cap
+      - Fees paid
+      - months of Fees
+    sections: [liabilit, limitation, precedence, data protection, security]
+    pattern: '\bliabilit(?:y|ies)\b.*\b(?:exceed|limited to|capped?)\b'
+    positions:
+      GREEN: { gte: 12 }
+      AMBER: { gte: 6 }
+      RED: default
+    missing: RED
+
+  governing_law:
+    title: Governing law
+    value_type: enum
+    standard: England and Wales, New York or Delaware
+    hints:
+      - governing law
+      - governed by the laws of
+      - jurisdiction
+      - construed in accordance with
+    sections: [governing law, general, miscellaneous, applicable law, jurisdiction]
+    pattern: '\b(?:governed by|governing law|laws of)\b'
+    positions:
+      GREEN: [England and Wales, New York, Delaware]
+      AMBER: [California, Ireland, Singapore]
+      RED: default
+    missing: RED
+
+  auto_renewal_notice_days:
+    title: Auto-renewal notice
+    value_type: days
+    standard: Notice to stop renewal of at most 30 days
+    hints:
+      - automatically renew
+      - renewal term
+      - notice of non-renewal
+      - then-current term
+    sections: [term, renewal]
+    pattern: '\brenew\w*\b.*\b(?:notice|notif\w+)\b'
+    positions:
+      GREEN: { lte: 30 }
+      AMBER: { lte: 60 }
+      RED: default
+    missing: RED
+
+  payment_terms_days:
+    title: Payment terms
+    value_type: days
+    standard: Invoices payable in at least 45 days
+    hints:
+      - invoice
+      - payable within
+      - payment terms
+      - net days
+      - remit payment
+    sections: [fees, payment, charges, commercial]
+    pattern: '\b(?:invoices?|payable|remit\w*)\b.*\b(?:within|net|after|due)\b'
+    positions:
+      GREEN: { gte: 45 }
+      AMBER: { gte: 30 }
+      RED: default
+    missing: RED
+
+  termination_for_convenience:
+    title: Termination for convenience
+    value_type: bool
+    standard: Customer may terminate for convenience
+    hints:
+      - terminate for convenience
+      - terminate without cause
+      - termination upon notice
+    sections: [terminat, term]
+    pattern: '\b(?:for convenience|without cause)\b'
+    rules:
+      - when: '\b(?:no right|may not|shall not|cannot|waive[sd]?|neither party)\b'
+        value: false
+      - when: '\b(?:may terminate|right to terminate|entitled to terminate)\b'
+        value: true
+    positions:
+      GREEN: true
+      RED: default
+    missing: RED
+
+  breach_notice_hours:
+    title: Breach notification
+    value_type: hours
+    standard: Security incidents notified within 72 hours
+    hints:
+      - security incident
+      - personal data breach
+      - notify without undue delay
+      - hours of becoming aware
+    sections: [security, data protection, breach, incident]
+    pattern: '\b(?:security incident|personal data breach|data breach)\b.*\b(?:notify|notice|inform\w*|notif\w+)\b|\b(?:notify|inform\w*)\b.*\b(?:security incident|personal data breach|data breach)\b'
+    positions:
+      GREEN: { lte: 72 }
+      AMBER: { lte: 96 }
+      RED: default
+    missing: RED
+
+  assignment_consent:
+    title: Assignment requires consent
+    value_type: bool
+    standard: Supplier may not assign without Customer consent
+    hints:
+      - assign
+      - assignment
+      - novate
+      - transfer rights
+      - prior written consent
+    sections: [assign, general, miscellaneous]
+    pattern: '\bassign\w*\b'
+    rules:
+      - when: '\b(?:shall|may|must|will) not (?:\w+,? ){0,3}?(?:assign|novate|transfer)|\bneither party (?:may|shall|will)\b'
+        value: true
+      - when: '\b(?:may|can|is free to) (?:freely )?(?:assign|transfer)\b'
+        value: false
+    positions:
+      GREEN: true
+      RED: default
+    missing: RED
+
+  indemnity_ip:
+    title: IP infringement indemnity
+    value_type: bool
+    standard: Supplier indemnifies against IP infringement claims
+    hints:
+      - indemnify
+      - infringe
+      - intellectual property
+      - third-party claim
+      - defend
+    sections: [indemn, intellectual property, liabilit]
+    pattern: '\b(?:indemnif\w+|infring\w+)\b.*\b(?:intellectual property|infring\w+|patent|copyright)\b'
+    rules:
+      - when: '\b(?:no obligation|excludes|disclaims|shall not be (?:liable|obliged|required))\b'
+        value: false
+      - when: '\b(?:shall|will|agrees to) (?:defend|indemnify)\b'
+        value: true
+    positions:
+      GREEN: true
+      RED: default
+    missing: RED

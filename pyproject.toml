@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "clauseanchor"
+version = "0.1.0"
+description = "Contract review against a legal playbook where every finding must anchor to a verbatim span and its value is re-parsed from that span."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "clauseanchor contributors" }]
+keywords = ["legal-tech", "contract-analysis", "information-extraction", "bm25", "llm-validation"]
+dependencies = [
+    "numpy>=1.26",
+    "pydantic>=2.6",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "rich>=13.7",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[project.scripts]
+clauseanchor = "clauseanchor.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/clauseanchor"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = ["live: calls a real model endpoint; runs only when CLAUSEANCHOR_LIVE=1"]
+filterwarnings = ["error"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["data"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
